@@ -6,23 +6,31 @@ using System.Threading.Tasks;
 
 namespace Flights.Domain
 {
-    public class GPSPoint
-    {
+    public class GPSPoint : IEquatable<GPSPoint>
+	{
         public LatCoordinate LatCoordinate { get; private set; }
         public LongCoordinate LongCoordinate { get; private set; }
 
-        public GPSPoint(LatCoordinate latCoordinate, LongCoordinate longCoordinate)
+		private GPSPoint() { }
+		public GPSPoint(LatCoordinate latCoordinate, LongCoordinate longCoordinate)
         {
             LatCoordinate = latCoordinate;
             LongCoordinate = longCoordinate;
         }
-    }
+
+		public bool Equals(GPSPoint other)
+		{
+			return other.LatCoordinate.Value == LatCoordinate.Value
+				&& other.LongCoordinate.Value == LongCoordinate.Value;
+		}
+	}
 
     public class LatCoordinate
     {
         public decimal Value { get; private set; }
 
-        public LatCoordinate(decimal coordinate)
+		private LatCoordinate() { }
+		public LatCoordinate(decimal coordinate)
         {
             Value = coordinate;
         }
@@ -32,7 +40,8 @@ namespace Flights.Domain
     {
         public decimal Value { get; private set; }
 
-        public LongCoordinate(decimal coordinate)
+		private LongCoordinate() { }
+		public LongCoordinate(decimal coordinate)
         {
             Value = coordinate;
         }

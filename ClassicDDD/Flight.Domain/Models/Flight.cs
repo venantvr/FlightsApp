@@ -1,4 +1,6 @@
 ﻿using Flights.Domain.Events;
+using Newtonsoft.Json;
+using RDD.Domain;
 using SimpleInjector;
 using System;
 using System.Collections.Generic;
@@ -12,11 +14,22 @@ namespace Flights.Domain
 	{
 		public const string EVENT_FLIGHT_CHANGED = "Flight.Changed";
 
+		public override string Name
+		{
+			get
+			{
+				return String.Format("From {0} to {1}", Departure.Name, Destination.Name);
+			}
+			protected set { throw new NotImplementedException(); }
+		}
+		public Guid DepartureId { get; private set; }
 		public Airport Departure { get; private set; }
+		public Guid DestinationId { get; private set; }
 		public Airport Destination { get; private set; }
+		public Guid PlaneId { get; private set; }
 		public Plane Plane { get; private set; }
-		public DateTime? DepartedAt { get; set; }
-		public DateTime? ArrivedAt { get; set; }
+		public DateTime? DepartedAt { get; internal set; }
+		public DateTime? ArrivedAt { get; internal set; }
 
 		public bool IsPlaneFlying
 		{
@@ -25,6 +38,8 @@ namespace Flights.Domain
 				return DepartedAt.HasValue && !ArrivedAt.HasValue;
 			}
 		}
+
+		private Flight() { }
 
 		public Flight(Airport departure, Airport destination, Plane plane, DateTime? departedAt, DateTime? arrivedAt)
 			: this(Guid.NewGuid(), departure, destination, plane, departedAt, arrivedAt) { }
@@ -39,13 +54,13 @@ namespace Flights.Domain
 			ArrivedAt = arrivedAt;
 		}
 
-        public void Start(IEventDispatcher dispatcher)
-        {
+		public void Start(IEventDispatcher dispatcher)
+		{
 			DepartedAt = DateTime.Now;
 			ArrivedAt = null;
 			dispatcher.RaiseEvent(new Event(EVENT_FLIGHT_CHANGED, this));
 
-            Plane.FlyThrough(dispatcher, Destination.Location);
+			Plane.FlyThrough(dispatcher, Destination.Location);
 
 			ArrivedAt = DateTime.Now;
 			dispatcher.RaiseEvent(new Event(EVENT_FLIGHT_CHANGED, this));

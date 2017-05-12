@@ -10,7 +10,8 @@ namespace Flights.Domain
     {
         public GPSPoint Location { get; private set; }
 
-        public Airport(string name, GPSPoint location)
+		private Airport() { }
+		public Airport(string name, GPSPoint location)
         {
             Name = name;
             Location = location;

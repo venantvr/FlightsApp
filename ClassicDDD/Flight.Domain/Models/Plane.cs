@@ -9,41 +9,58 @@ namespace Flights.Domain
     public class Plane : Entity
     {
 		public const string EVENT_LOCATION_CHANGED = "Plane.LocationChanged";
-		private const int SPEED = 20000; //in km/h
-		private const int SLEEP_INTERVAL = 500; //in ms
+		internal const int SPEED = 20000; //in km/h
+		internal const int SLEEP_INTERVAL = 500; //in ms
 
-		public GPSPoint CurrentLocation { get; private set; }
+		internal ICollection<PlanePosition> Positions { get; private set; }
 
-        public Plane(Guid id, GPSPoint location)
-        {
+		public GPSPoint CurrentLocation
+		{
+			get
+			{
+				var position = Positions.OrderBy(p => p.RecordedAt).LastOrDefault();
+				return new GPSPoint(new LatCoordinate(position.Lat), new LongCoordinate(position.Long));
+			}
+		}
+
+		public Plane()
+		{
+			Positions = new HashSet<PlanePosition>();
+		}
+
+		public Plane(Guid id, GPSPoint location)
+			: this()
+		{
 			Id = id;
-			CurrentLocation = location;
-        }
+			Positions.Add(new PlanePosition(id, location));
+		}
 
-        internal void FlyThrough(IEventDispatcher dispatcher,  GPSPoint destination)
-        {
-            var router = new FlightRouter(CurrentLocation, destination, SPEED);
+		internal void FlyThrough(IEventDispatcher dispatcher, GPSPoint destination)
+		{
+			var router = new FlightRouter(CurrentLocation, destination, SPEED);
 
-            for (var i=0; i < 100; i++)
-            {
-                CurrentLocation = router.CurrentLocation;
-				dispatcher.RaiseEvent(new Event(EVENT_LOCATION_CHANGED, this));
+			for (var i = 0; i < 100; i++)
+			{
+				var position = new PlanePosition(Id, router.CurrentLocation);
+				Positions.Add(position);
+				dispatcher.RaiseEvent(new Event(EVENT_LOCATION_CHANGED, position));
 
-                Thread.Sleep(SLEEP_INTERVAL);
+				Thread.Sleep(SLEEP_INTERVAL);
 
 				//After sleep router is still at the same location ?
 				//If so, means that the fly is over
-				if (router.CurrentLocation == CurrentLocation)
+				if (router.CurrentLocation.Equals(CurrentLocation))
 				{
 					break;
 				}
-            }
-        }
+			}
+		}
 
 		internal void ResetLocation(IEventDispatcher dispatcher, GPSPoint location)
 		{
-			CurrentLocation = location;
-			dispatcher.RaiseEvent(new Event(EVENT_LOCATION_CHANGED, this));
+			var position = new PlanePosition(Id, location);
+			Positions.Add(position);
+			dispatcher.RaiseEvent(new Event(EVENT_LOCATION_CHANGED, position));
 		}
-    }
+	}
 }

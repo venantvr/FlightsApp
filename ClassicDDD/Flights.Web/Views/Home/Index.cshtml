@@ -40,7 +40,7 @@
 					});
 				},
 				Marker: function (flight) {
-					var coords = new google.maps.LatLng(flight.Lat, flight.Long);
+					var coords = new google.maps.LatLng(flight.Plane.CurrentLocation.LatCoordinate.Value, flight.Plane.CurrentLocation.LongCoordinate.Value);
 					flight.marker = new google.maps.Marker({
 						position: coords,
 						map: map,
@@ -50,21 +50,21 @@
 			};
 		}
 		function FlightsCollection(map, dom) {
-			var href = '/api/flights';
+			var href = '/rdd/api/flights';
 			var that = this;
 			return {
 				DrawFlights: function () {
 					return aja()
-						.url('/api/flights')
+						.url('/rdd/api/flights')
 						.on('success', function (data) {
 							for (var i = 0; i < data.length; i++) {
 								var flight = data[0];
 								new map.Marker(flight);
 								flight.UpdatePlanePosition = function () {
 									aja()
-										.url('/api/flights/' + flight.Id)
+										.url('/rdd/api/flights/' + flight.Id)
 										.on('success', function (data) {
-											var newCoords = new google.maps.LatLng(data.Lat, data.Long);
+											var newCoords = new google.maps.LatLng(data.Plane.CurrentLocation.LatCoordinate.Value, data.Plane.CurrentLocation.LongCoordinate.Value);
 											flight.marker.setPosition(newCoords);
 											if (data.IsPlaneFlying) {
 												setTimeout(function () { flight.UpdatePlanePosition(); }, 200);											}
@@ -74,7 +74,7 @@
 								flight.Start = function () {
 									return aja()
 										.method('post')
-										.url('/api/flights/' + flight.Id + '/start')
+										.url('/rdd/api/flights/' + flight.Id + '/start')
 										.on('success', function (data) {
 											setTimeout(function () { flight.UpdatePlanePosition(); }, 200);
 										})
@@ -83,7 +83,7 @@
 								flight.Reset = function () {
 									return aja()
 										.method('post')
-										.url('/api/flights/' + flight.Id + '/reset')
+										.url('/rdd/api/flights/' + flight.Id + '/reset')
 										.on('success', function (data) {
 											setTimeout(function () { flight.UpdatePlanePosition(); }, 200);
 										})

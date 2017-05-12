@@ -1,6 +1,8 @@
 ﻿using Flights.Domain;
+using Flights.Domain.Collections;
 using Flights.Infra;
-using Flights.Web.Models;
+using RDD.Domain;
+using RDD.Infra.Services;
 using SimpleInjector;
 using System;
 using System.Collections.Generic;
@@ -14,35 +16,24 @@ namespace Flights.Web.Controllers
 {
     public class FlightsController : ApiController
     {
-        // GET api/flights
-        public IEnumerable<FlightDto> Get()
-        {
-            var repo = new FlightsRepository();
-            var flights = repo.GetFlights();
-
-			return flights
-				.Select(f => new FlightDto
-				{
-					Id = f.Id,
-					IsPlaneFlying = f.IsPlaneFlying,
-					Lat = f.Plane.CurrentLocation.LatCoordinate.Value,
-					Long = f.Plane.CurrentLocation.LongCoordinate.Value,
-				});
-        }
-
-		// GET api/flights/{id}
-		public FlightDto Get(Guid id)
+		// GET api/flights
+		public IEnumerable<Flight> Get()
 		{
 			var repo = new FlightsRepository();
-			var flight = repo.GetFlightById(id);
+			var collection = new FlightsCollection(repo);
+			var flights = collection.GetFlights();
 
-			return new FlightDto
-			{
-				Id = flight.Id,
-				IsPlaneFlying = flight.IsPlaneFlying,
-				Lat = flight.Plane.CurrentLocation.LatCoordinate.Value,
-				Long = flight.Plane.CurrentLocation.LongCoordinate.Value,
-			};
+			return flights;
+		}
+
+		// GET api/flights/{id}
+		public Flight Get(Guid id)
+		{
+			var repo = new FlightsRepository();
+			var collection = new FlightsCollection(repo);
+			var flight = collection.GetFlightById(id);
+
+			return flight;
 		}
 
 		// POST api/flights/{id}/start
@@ -50,13 +41,10 @@ namespace Flights.Web.Controllers
         public void Start(Guid id)
         {
 			var repo = new FlightsRepository();
-			var flights = repo.GetFlights();
+			var collection = new FlightsCollection(repo);
+			var flight = collection.GetFlightById(id);
 
-			var flight = flights.FirstOrDefault(f => f.Id == id);
-			if (flight != null)
-			{
-				Task.Run(() => flight.Start(WebApiApplication.DIContainer.GetInstance<IEventDispatcher>()));
-			}
+			Task.Run(() => flight.Start(WebApiApplication.DIContainer.GetInstance<IEventDispatcher>()));
 		}
 
 		// POST api/flights/{id}/reset
@@ -64,13 +52,10 @@ namespace Flights.Web.Controllers
 		public void Reset(Guid id)
 		{
 			var repo = new FlightsRepository();
-			var flights = repo.GetFlights();
+			var collection = new FlightsCollection(repo);
+			var flight = collection.GetFlightById(id);
 
-			var flight = flights.FirstOrDefault(f => f.Id == id);
-			if (flight != null)
-			{
-				flight.Reset(WebApiApplication.DIContainer.GetInstance<IEventDispatcher>());
-			}
+			flight.Reset(WebApiApplication.DIContainer.GetInstance<IEventDispatcher>());
 		}
 	}
 }
